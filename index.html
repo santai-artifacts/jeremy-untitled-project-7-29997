@@ -2,504 +2,455 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Snake</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wordle</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #0f1420;
-    --panel: #171d2b;
-    --panel-2: #1e2536;
-    --grid-a: #141a27;
-    --grid-b: #121824;
-    --accent: #fde047;
-    --accent-dim: #facc15;
-    --food: #f472b6;
-    --text: #e7ecf3;
-    --muted: #8b95a7;
+    --bg: #0f1512;
+    --panel: #16201a;
+    --panel-2: #1e2b23;
+    --border: #2b3a30;
+    --border-lit: #3d5244;
+    --correct: #22c55e;
+    --correct-dim: #16a34a;
+    --present: #eab308;
+    --absent: #3a4a40;
+    --text: #e9f1ec;
+    --muted: #8ba394;
     --shadow: 0 20px 60px -20px rgba(0,0,0,.7);
-    --radius: 18px;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html, body {
-    height: 100%;
-  }
-
+  html, body { height: 100%; }
   body {
     font-family: "Space Grotesk", system-ui, -apple-system, sans-serif;
     background:
-      radial-gradient(1200px 600px at 20% -10%, #1b2333 0%, transparent 60%),
-      radial-gradient(900px 500px at 100% 110%, #1a2030 0%, transparent 55%),
+      radial-gradient(1100px 600px at 15% -10%, #17241c 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 110%, #14201a 0%, transparent 55%),
       var(--bg);
     color: var(--text);
     min-height: 100%;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .app {
-    width: 100%;
-    max-width: 460px;
-    display: flex;
     flex-direction: column;
-    gap: 18px;
+    align-items: center;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 
   header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .logo {
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    background: linear-gradient(145deg, var(--accent), var(--accent-dim));
-    display: grid;
-    place-items: center;
-    box-shadow: 0 8px 20px -6px rgba(250,204,21,.5);
-  }
-  .logo svg { width: 22px; height: 22px; }
-
-  h1 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-  .brand p { color: var(--muted); font-size: .8rem; margin-top: 1px; }
-
-  .scores {
-    display: flex;
-    gap: 10px;
-  }
-  .stat {
-    background: var(--panel);
-    border: 1px solid rgba(255,255,255,.05);
-    border-radius: 14px;
-    padding: 8px 14px;
-    min-width: 74px;
-    text-align: center;
-    box-shadow: var(--shadow);
-  }
-  .stat .label {
-    font-size: .62rem;
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--muted);
-    font-weight: 600;
-  }
-  .stat .value {
-    font-size: 1.35rem;
-    font-weight: 700;
-    line-height: 1.1;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .board-wrap {
-    position: relative;
-    background: var(--panel);
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: var(--radius);
-    padding: 14px;
-    box-shadow: var(--shadow);
-  }
-
-  canvas {
-    display: block;
     width: 100%;
-    height: auto;
-    border-radius: 12px;
-    touch-action: none;
-    background: var(--grid-b);
-  }
-
-  .overlay {
-    position: absolute;
-    inset: 14px;
-    border-radius: 12px;
-    background: rgba(10,14,22,.78);
-    backdrop-filter: blur(6px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 14px;
-    padding: 24px;
-    transition: opacity .25s ease;
-  }
-  .overlay.hidden { opacity: 0; pointer-events: none; }
-
-  .overlay h2 { font-size: 1.7rem; font-weight: 700; letter-spacing: -.02em; }
-  .overlay p { color: var(--muted); font-size: .92rem; max-width: 280px; line-height: 1.5; }
-  .overlay .big { color: var(--accent); font-weight: 700; }
-
-  button.play {
-    margin-top: 4px;
-    background: linear-gradient(145deg, var(--accent), var(--accent-dim));
-    color: #2a2200;
-    border: none;
-    border-radius: 12px;
-    padding: 12px 28px;
-    font-family: inherit;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 10px 24px -8px rgba(250,204,21,.55);
-    transition: transform .12s ease, box-shadow .12s ease;
-  }
-  button.play:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -10px rgba(250,204,21,.6); }
-  button.play:active { transform: translateY(0); }
-
-  .footer {
+    max-width: 500px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .logo {
+    width: 38px; height: 38px; border-radius: 11px;
+    background: linear-gradient(145deg, var(--correct), var(--correct-dim));
+    display: grid; place-items: center; font-weight: 700; color: #062011;
+    font-size: 1.25rem; box-shadow: 0 8px 20px -6px rgba(34,197,94,.5);
+  }
+  h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; }
+  .brand p { color: var(--muted); font-size: .74rem; margin-top: 1px; }
+  .tools { display: flex; gap: 8px; }
+  .icon-btn {
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--muted); width: 38px; height: 38px; border-radius: 10px;
+    cursor: pointer; display: grid; place-items: center;
+    transition: all .15s ease; font-size: 1.1rem;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--border-lit); background: var(--panel-2); }
+
+  main {
+    flex: 1; width: 100%; max-width: 500px;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: space-between; gap: 14px; padding: 18px;
   }
 
-  .hint {
-    color: var(--muted);
-    font-size: .78rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .board {
+    display: grid; grid-template-rows: repeat(6, 1fr); gap: 7px;
+    margin: auto 0;
   }
-  kbd {
-    background: var(--panel-2);
-    border: 1px solid rgba(255,255,255,.08);
-    border-bottom-width: 2px;
-    border-radius: 6px;
-    padding: 2px 7px;
-    font-family: inherit;
-    font-size: .72rem;
-    color: var(--text);
-  }
-
-  .speed {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: .78rem;
-    color: var(--muted);
-  }
-  .seg {
-    display: flex;
-    background: var(--panel);
-    border: 1px solid rgba(255,255,255,.06);
-    border-radius: 10px;
-    padding: 3px;
-    gap: 2px;
-  }
-  .seg button {
+  .row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .tile {
+    width: 60px; height: 60px;
+    display: grid; place-items: center;
+    font-size: 1.9rem; font-weight: 700; text-transform: uppercase;
+    border: 2px solid var(--border);
+    border-radius: 8px;
     background: transparent;
-    border: none;
-    color: var(--muted);
-    font-family: inherit;
-    font-size: .74rem;
-    font-weight: 600;
-    padding: 5px 12px;
-    border-radius: 7px;
-    cursor: pointer;
-    transition: all .15s ease;
+    transition: transform .1s ease, border-color .15s ease, background .2s ease;
+    user-select: none;
   }
-  .seg button.active {
-    background: var(--panel-2);
-    color: var(--accent);
-  }
+  .tile.filled { border-color: var(--border-lit); animation: pop .1s ease; }
+  @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
 
-  @media (max-width: 420px) {
-    h1 { font-size: 1.35rem; }
-    .stat { min-width: 64px; padding: 7px 10px; }
+  .tile.reveal { animation: flip .5s ease forwards; }
+  @keyframes flip {
+    0% { transform: rotateX(0); }
+    50% { transform: rotateX(90deg); }
+    100% { transform: rotateX(0); }
   }
+  .tile.correct { background: var(--correct); border-color: var(--correct); color: #06210f; }
+  .tile.present { background: var(--present); border-color: var(--present); color: #241c00; }
+  .tile.absent  { background: var(--absent);  border-color: var(--absent);  color: #cdd8d1; }
 
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
+  .row.shake { animation: shake .4s ease; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-7px)}
+    40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)}
   }
+  .row.win .tile.correct { animation: bounce .5s ease; }
+  .row.win .tile.correct:nth-child(2){animation-delay:.08s}
+  .row.win .tile.correct:nth-child(3){animation-delay:.16s}
+  .row.win .tile.correct:nth-child(4){animation-delay:.24s}
+  .row.win .tile.correct:nth-child(5){animation-delay:.32s}
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-14px)} 70%{transform:translateY(4px)} }
+
+  .keyboard { display: flex; flex-direction: column; gap: 7px; width: 100%; max-width: 484px; }
+  .krow { display: flex; gap: 6px; justify-content: center; }
+  .key {
+    flex: 1; min-width: 0; height: 54px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 7px; font-family: inherit;
+    font-size: .95rem; font-weight: 600; text-transform: uppercase;
+    cursor: pointer; transition: all .12s ease;
+    display: grid; place-items: center;
+  }
+  .key.wide { flex: 1.5; font-size: .72rem; }
+  .key:hover { background: var(--border); }
+  .key:active { transform: scale(.95); }
+  .key.correct { background: var(--correct); border-color: var(--correct); color: #06210f; }
+  .key.present { background: var(--present); border-color: var(--present); color: #241c00; }
+  .key.absent  { background: #24302a; border-color: #24302a; color: #6b7d72; }
+
+  .toast-wrap {
+    position: fixed; top: 76px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 8px; align-items: center;
+    z-index: 50; pointer-events: none;
+  }
+  .toast {
+    background: #eef4f0; color: #0f1512; font-weight: 600; font-size: .9rem;
+    padding: 11px 18px; border-radius: 10px; box-shadow: 0 10px 30px -8px rgba(0,0,0,.6);
+    animation: toastIn .2s ease;
+  }
+  @keyframes toastIn { from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)} }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(6,10,8,.72);
+    backdrop-filter: blur(6px); display: grid; place-items: center;
+    z-index: 100; padding: 20px; transition: opacity .2s ease;
+  }
+  .modal-bg.hidden { opacity: 0; pointer-events: none; }
+  .modal {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 18px; padding: 26px; max-width: 360px; width: 100%;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .modal h2 { font-size: 1.5rem; margin-bottom: 6px; letter-spacing: -.02em; }
+  .modal .sub { color: var(--muted); font-size: .9rem; margin-bottom: 18px; line-height: 1.5; }
+  .answer-reveal {
+    font-size: 2rem; font-weight: 700; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--correct); margin: 4px 0 18px;
+  }
+  .stats { display: flex; justify-content: center; gap: 22px; margin-bottom: 20px; }
+  .stat .n { font-size: 1.8rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: .66rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-top: 2px; }
+  .modal .how { text-align: left; color: var(--muted); font-size: .85rem; line-height: 1.6; margin-bottom: 18px; }
+  .modal .how b { color: var(--text); }
+  .chip { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 5px; font-weight: 700; color: #06210f; vertical-align: middle; font-size: .8rem; }
+  button.primary {
+    background: linear-gradient(145deg, var(--correct), var(--correct-dim));
+    color: #06210f; border: none; border-radius: 11px; padding: 13px 24px;
+    font-family: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+    width: 100%; box-shadow: 0 10px 24px -8px rgba(34,197,94,.5);
+    transition: transform .12s ease;
+  }
+  button.primary:hover { transform: translateY(-2px); }
+
+  @media (max-width: 460px) {
+    .tile { width: 52px; height: 52px; font-size: 1.6rem; }
+    .key { height: 48px; }
+    h1 { font-size: 1.3rem; }
+  }
+  @media (max-width: 360px) {
+    .tile { width: 46px; height: 46px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="brand">
-        <div class="logo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#2a2200" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 5h6a3 3 0 0 1 3 3v8a3 3 0 0 0 3 3h2" />
-            <circle cx="19" cy="5" r="1.4" fill="#2a2200" stroke="none" />
-          </svg>
-        </div>
-        <div>
-          <h1>Snake</h1>
-          <p>Eat, grow, don't bite yourself.</p>
-        </div>
-      </div>
-      <div class="scores">
-        <div class="stat">
-          <div class="label">Score</div>
-          <div class="value" id="score">0</div>
-        </div>
-        <div class="stat">
-          <div class="label">Best</div>
-          <div class="value" id="best">0</div>
-        </div>
-      </div>
-    </header>
-
-    <div class="board-wrap">
-      <canvas id="board" width="440" height="440"></canvas>
-      <div class="overlay" id="overlay">
-        <h2 id="ov-title">Ready to play?</h2>
-        <p id="ov-msg">Use the <span class="big">arrow keys</span> or <span class="big">WASD</span> to steer. On mobile, swipe anywhere on the board.</p>
-        <button class="play" id="playBtn">Start Game</button>
+  <header>
+    <div class="brand">
+      <div class="logo">W</div>
+      <div>
+        <h1>Wordle</h1>
+        <p>Guess the word in six tries.</p>
       </div>
     </div>
-
-    <div class="footer">
-      <div class="hint">
-        <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd>
-        <span>or swipe · <kbd>Space</kbd> to pause</span>
-      </div>
-      <div class="speed">
-        <span>Speed</span>
-        <div class="seg" id="speedSeg">
-          <button data-speed="130">Chill</button>
-          <button data-speed="95" class="active">Normal</button>
-          <button data-speed="65">Fast</button>
-        </div>
-      </div>
+    <div class="tools">
+      <button class="icon-btn" id="helpBtn" title="How to play" aria-label="How to play">?</button>
+      <button class="icon-btn" id="newBtn" title="New game" aria-label="New game">↻</button>
     </div>
+  </header>
+
+  <main>
+    <div class="board" id="board"></div>
+    <div class="keyboard" id="keyboard"></div>
+  </main>
+
+  <div class="toast-wrap" id="toasts"></div>
+
+  <div class="modal-bg hidden" id="modalBg">
+    <div class="modal" id="modal"></div>
   </div>
 
 <script>
 (() => {
   "use strict";
 
-  const canvas = document.getElementById("board");
-  const ctx = canvas.getContext("2d");
-  const scoreEl = document.getElementById("score");
-  const bestEl = document.getElementById("best");
-  const overlay = document.getElementById("overlay");
-  const ovTitle = document.getElementById("ov-title");
-  const ovMsg = document.getElementById("ov-msg");
-  const playBtn = document.getElementById("playBtn");
-  const speedSeg = document.getElementById("speedSeg");
+  // Curated answer pool (common 5-letter words).
+  const ANSWERS = "about above abuse actor acute admit adopt adult after again agent agree ahead alarm album alert alike alive allow alone along alter among anger angle angry apart apple apply arena argue arise array aside asset audio audit avoid award aware badly baker bases basic beach began begin begun being below bench birth black blame blank blast blind block blood board boost booth bound brain brand brass brave bread break breed brick brief bring broad broke brown build built buyer cable carry catch cause chain chair chaos charm chart chase cheap check chest chief child china chose civil claim class clean clear click climb clock close cloud coach coast could count court cover craft crash crazy cream crime cross crowd crown crude curve cycle daily dance dated dealt death debut delay depth doing doubt dozen draft drama drank draw dream dress drill drink drive drove dying eager early earth eight elite empty enemy enjoy enter entry equal error event every exact exist extra faith false fault favor fence fever field fifth fifty fight final first fixed flame flash fleet floor fluid focus force forth forty forum found frame frank fraud fresh front fruit fully funny giant given glass globe glory grace grade grain grand grant grass grave great green greet gross group grown guard guess guest guide happy harsh heart heavy hello hence horse hotel house human ideal image index inner input issue joint judge known label large laser later laugh layer learn lease least leave legal lemon level light limit lines links lived liver local logic loose lower loyal lucky lunch lying magic major maker march match maybe mayor meant medal media metal meter might minor minus mixed model money month moral motor mount mouse mouth movie music needs never newly night noble noise north noted novel nurse ocean offer often order other ought paint panel paper party peace phase phone photo piano picks piece pilot pitch place plain plane plant plate point pound power press price pride prime print prior prize proof proud prove queen quick quiet quite radio raise range rapid ratio reach ready realm rebel refer relax reply rider ridge right rigid rival river robot rocky roman rough round route royal rural scale scene scope score sense serve seven shall shape share sharp sheet shelf shell shift shine shirt shock shoot shore short shown sight since sixth sixty skill sleep slice slide small smart smile smoke solid solve sorry sound south space spare speak speed spend spent spice spike split spoke sport staff stage stake stand start state steam steel steep steer stern stick still stock stone stood store storm story strip stuck study stuff style sugar suite super sweet table taken taste taxes teach teams tears teeth terry texas thank theft their theme there these thick thing think third those three threw throw thumb tiger tight timer times tired title today token topic total touch tough tower toxic trace track trade trail train treat trend trial tribe trick tried tries truck truly trust truth twice twist tyler ultra uncle under undue union unity until upper upset urban usage usual valid value video virus visit vital vocal voice waste watch water wheel where which while white whole whose woman women world worry worse worst worth would wound wrote yield young youth".split(" ");
 
-  const GRID = 20;                 // cells per side
-  const CELL = canvas.width / GRID; // px per cell (22)
+  // Extra valid guesses (accepted but never the answer). Merged with ANSWERS for validation.
+  const EXTRA = "aback abbey abbot abide abled abode abort abyss acorn acrid actin adage adept adieu adobe adore adorn agape agate agile aging agony aider aisle alder algae alias alien align alley allot alloy aloft aloha aloof ample amply amuse angel anime ankle annex annul antic anvil aorta apron aptly ardor areas argon aroma arrow arson artsy ascot ashen ashes atlas atoll attic augur aunty avail avert axial axiom azure basil baton bayou beady beast beech belie belle belly berry bezel bigot bijou bitty blaze bleak bleed blend bless blimp bliss bloat bloke blond bloom bluff blunt blurb blurt blush booby boozy borax botch bough boxer brace braid brake brawl bribe brine broil brook broom broth brunt brush brute buddy budge buggy bugle bulky bully bunch bunny buxom cacao cache cacti caddy cadet cagey camel cameo candy canny canoe caper cargo carol carve caste cater cedar cello chalk champ chant chard charm cheek cheer chess chewy chief chili chill chime chirp chock choir choke chomp chord chuck chump chunk churn chute cider cigar cinch circa civic clamp clang clank clasp cleat cleft clerk cliff cling clink cloak cloth clout clove clown cluck clued clump clung coach cobra cocoa colon comet comfy comma condo coral corny couch cough cower coyly cramp crane crank crass crate crave crawl craze creak creek creme crepe crept cress crest crick croak crock crony crook croon crumb crunk cubic cumin curio curly curry curse curvy cyber cynic dairy daisy dandy datum daunt dealt debit decal decay decor decoy decry defer deign deity delta demon demur denim dense depot deter devil diary dicey digit dimly diner dingo dingy ditch ditto ditzy diver dizzy dodge dodgy dogma doily donor donut dowdy dowel downy dowry dryer duchy dully dummy dumpy dunce dusky dusty dutch dwarf dwell dwelt eaten ebony eclat edict edify eerie egret eking elbow elder elect elegy elfin elope elude elves ember embed emcee empth ennui envoy epoch epoxy equip erase erect erode erupt essay ester ether ethic ethos evade evict evoke exalt excel expel extol exult eying fable facet faint fairy faith fancy farce fatal fated fatty fauna feast fecal feign fella felon femur ferry fetal fetch fetid fetus fewer fiber fibre ficus fiend fiery fifth fight filch filet filly filmy filth finch finer first fishy fizzy fjord flack flail flair flake flaky flank flare flask fleck fleet flick flier fling flint flirt float flock flood floor flora floss flour flout flown fluff flung flunk flush flute flyer foamy foist foray forge forgo forte forum foyer frail franc fraught freak frisk frock frost froth frown froze fudge fugue fully fungi funky furor furry fussy fuzzy gaffe gaily gamer gamma gamut gassy gaudy gauge gaunt gauze gauzy gavel gawky gayer gayly gazer gecko geeky geese genie genre ghost ghoul giddy girly girth given giver gizmo glade gland glare glaze gleam glean glide glint gloat gloom gloss glove glued gnash gnome godly goeth golem golfer gonad goner gooey goofy goose gorge gouge gourd grade graft grail grape graph grasp grate gravy graze grease greed grief grill grime grimy grind gripe groan groin groom grope group grout grove growl grunt guano guard guava gulch gully gumbo gunk guppy gusto gusty gutsy habit hairy halve handy hardy harem harpy hasty hatch haute haven havoc hazel heady heap heart hedge hefty heist helix hello herby heron hilly hinge hippo hippy hitch hoard hobby honey honk hooch hotly hound hovel hover howdy human humid humor humph humus hunch hunky hurry husky hussy hutch hydro hyena hymen hyper icily icing ideal idiom idiot idler idyll igloo iliac imbue imply inane inbox incur ingot inept inert infer ingot inlay inlet inner input inter intro ionic irate irk irony islet issue itchy ivory jaunt jazzy jelly jerky jetty jewel jiffy joint joist joker jolly joust jowly juice juicy jumbo jumpy junta junto juror kappa karma kayak kebab khaki kinky kiosk kitty knack knave knead kneel knelt knife knock knoll known koala krill label labor laden ladle lager lance lanky lapel lapse larva lasso latch later lathe laugh layer leach leafy leaky leant leapt learn lease leash least ledge leech leery lefty legal leggy lemon lemur level lever libel liege light liken lilac limbo limit linen liner lingo lipid lithe liver livid llama loamy loath lobby local locus lodge lofty logic login loopy loose loser louse lousy lover lower lowly loyal lucid lucky lumen lumpy lunar lunge lupus lurch lurid lusty lying lymph lyric macaw macho macro madam madly mafia magic magma maize major maker mambo mamma mango mangy mania manic manly manor maple march marry marsh mason massy match matey mauve maxim maybe mayor mealy meant meaty mecca medal media medic melee melon mercy merge merit merry metal meter metro micro midge midst might milky mimic mince miner mingy minim minor minty minus mirth miser missy mocha modal model modem mogul moist molar moldy money month moody moose moral moron morph mossy motel motif motor motto moult mound mount mourn mouse mousy mouth mover movie mower mucky mucus muddy mulch mummy munch mural murky mushy music musky musty myrrh nadir naive nanny nasal nasty natal naval navel needy neigh nerdy nerve never newer newly nicer niche niece night ninja ninny ninth noble nobly noise noisy nomad noose north nosey notch noted novel nudge nurse nutty nylon nymph oaken obese occur ocean octal octet odder oddly offal offer often ohms olden older olive ombre omega onion onset opera opine opium optic orbit order organ other otter ought ounce outdo outer outgo ovary ovate overt ovine ovoid owing owner oxide ozone paddy pagan paint paler palsy panel panic pansy papal paper parer parka parry parse party pasta paste pasty patch pathos patio patsy patty pause payee payer peace peach pearl pecan pedal penal pence penne penny perch peril perky pesky pesto petal petty phase phone phony photo piano picky piece piety piggy pilot pinch piney pinky pinto piper pique pitch pithy pivot pixel pixie pizza place plaid plain plait plane plank plant plate plaza plead pleat plied plier pluck plumb plume plump plunk plush poesy point poise poker polar polka polyp pooch poppy porch poser posit posse pouch pound pouty power prank prawn preen press price prick pride pried prime primo primp print prior prism privy prize probe prone prong proof props prose proud prove prowl proxy prude prune psalm pubic pudgy puffy pulpy pulse punch pupal pupil puppy puree purer purge purse pushy putty pygmy quack quail quake qualm quark quart quash quasi queasy queen queer quell query quest queue quick quiet quill quilt quirk quite quota quote quoth rabbi rabid racer radar radii radio rainy raise rajah rally ralph ramen ranch randy range rangy rapid rarer raspy ratio ratty raven rayon razor reach react ready realm rearm rebar rebel rebus rebut recap recur recut reedy refer refit regal rehab reign relax relay relic remit renal renew repay repel reply rerun reset resin retch retro retry reuse revel revue rhino rhyme ridge rifle right rigid rigor rinse ripen riper risen riser risky rival riven river rivet roach roast robin robot rocky rodeo roger rogue roomy roost rotor rouge rough round rouse route rover rowdy rower royal ruddy ruder rugby ruler rumba rumor rupee rural rusty sadly safer saint salad sally salon salsa salty salve salvo sandy saner sappy sassy satin satyr sauce saucy sauna saute savor savoy savvy scald scale scalp scaly scamp scant scare scarf scary scene scent scion scoff scold scone scoop scope score scorn scour scout scowl scram scrap scree screw scrub scrum scuba sedan seedy segue seize semen sense sepia serif serum serve setup seven sever sewer shack shade shady shaft shake shaky shale shall shalt shame shank shape shard share shark sharp shave shawl shear sheen sheep sheer sheet sheik shelf shell shied shift shine shiny shirk shirt shoal shock shone shook shoot shore shorn short shout shove shown showy shrew shrub shrug shuck shunt shush shyer shyly siege sieve sight sigma silky silly since sinew singe siren sissy sixth sixty skate skier skiff skill skimp skirt skulk skull skunk slack slain slang slant slash slate slave sleek sleep sleet slept slice slick slide slime slimy sling slink sloop slope slosh sloth slump slung slunk slurp slush slyly smack small smart smash smear smell smelt smile smirk smite smith smock smoke smoky snack snail snake snaky snare snarl sneak sneer snide sniff snipe snoop snore snort snout snowy snuck snuff soapy sober soggy solar solid solve sonar sonic sooth sooty sorry sound south sowed space spade spank spare spark spasm spawn speak spear speck speed spell spend spent sperm spice spicy spied spiel spike spiky spill spilt spine spiny spire spite splat split spoil spoke spoof spook spool spoon spore sport spout spray spree sprig spume spunk spurn spurt squad squat squib stack staff stage staid stain stair stake stale stalk stall stamp stand stank stare stark start stash state stave stead steak steal steam steed steel steep steer stein stern stick stiff still stilt sting stink stint stock stoic stoke stole stomp stone stony stood stool stoop store stork storm story stout stove strap straw stray strip strut stuck study stuff stump stung stunk stunt style suave sugar suing suite sulky sully sumac sunny super surer surge surly sushi swami swamp swarm swash swath swear sweat sweep sweet swell swept swift swill swine swing swirl swish swoon swoop sword swore sworn swung synod syrup tabby table taboo tacit tacky taffy taint taken taker tally talon tamer tango tangy taper tapir tardy tarot taste tasty tatty taunt tawny teach teary tease teddy teeth tempo tenet tenor tense tenth tepee tepid terra terse testy thank theft their theme there these thick thief thigh thing think third thong thorn those three threw throb throw thrum thumb thump thyme tiara tibia tidal tiger tight tilde timer timid tipsy titan tithe title toast today toddy token tonal tonga tonic tooth topaz topic torch torso torus total totem touch tough towel tower toxic toxin trace track tract trade trail train trait tramp trash trawl tread treat trend triad trial tribe trice trick tried tripe trite troll troop trope trout trove truce truck truer truly trump trunk truss trust truth tryst tubal tuber tulip tulle tumor tunic turbo tutor twang tweak tweed tweet twice twine twirl twist twixt tying udder ulcer ultra umbra uncle uncut under undid undue unfed unfit unify union unite unity unlit unmet unset untie until unwed unzip upper upset urban urine usage usher using usual usurp utile utter vague valet valid valor value valve vapid vapor vault vaunt vegan venom venue verge verse verso verve vicar video vigil vigor villa vinyl viola viper viral virus visit visor vista vital vivid vixen vocal vodka vogue voice voila vomit voter vouch vowel vroom vying wacky wafer wager wagon waist waive waltz warty waste watch water waver waxen weary weave wedge weedy weigh weird welch welsh whack whale wharf wheat wheel whelp where which whiff while whine whiny whirl whisk white whole whoop whose widen wider widow width wield wight wimpy wince winch windy wiser wispy witch witty woken woman women woody wooer wooly woozy wordy world worry worse worst worth would wound woven wrack wrath wreak wreck wrest wring wrist write wrong wrote wrung wryly yacht yearn yeast yield yodel yokel yolk young yours youth yummy zebra zesty zonal".split(" ");
 
-  // Game state (in-memory only — no persistence in sandbox)
-  let snake, dir, nextDir, food, score, best = 0, stepMs = 95;
-  let running = false, paused = false, lastTick = 0, animId = null;
-  let popScale = 0;                 // little pulse when food eaten
+  const VALID = new Set([...ANSWERS, ...EXTRA]);
 
-  function reset() {
-    const c = Math.floor(GRID / 2);
-    snake = [ {x:c-1,y:c}, {x:c-2,y:c}, {x:c-3,y:c} ];
-    dir = {x:1, y:0};
-    nextDir = {x:1, y:0};
-    score = 0;
-    scoreEl.textContent = "0";
-    placeFood();
+  const ROWS = 6, COLS = 5;
+  const boardEl = document.getElementById("board");
+  const kbEl = document.getElementById("keyboard");
+  const toastEl = document.getElementById("toasts");
+  const modalBg = document.getElementById("modalBg");
+  const modal = document.getElementById("modal");
+
+  let answer, row, col, grid, over, busy;
+  let stats = { played: 0, wins: 0, streak: 0, maxStreak: 0 };
+
+  function pickAnswer() {
+    return ANSWERS[Math.floor(Math.random() * ANSWERS.length)].toUpperCase();
   }
 
-  function placeFood() {
-    let p;
-    do {
-      p = { x: (Math.random()*GRID)|0, y: (Math.random()*GRID)|0 };
-    } while (snake.some(s => s.x===p.x && s.y===p.y));
-    food = p;
-  }
-
-  function start() {
-    reset();
-    running = true;
-    paused = false;
-    overlay.classList.add("hidden");
-    lastTick = performance.now();
-    if (animId) cancelAnimationFrame(animId);
-    loop(lastTick);
-  }
-
-  function gameOver() {
-    running = false;
-    if (score > best) { best = score; bestEl.textContent = best; }
-    ovTitle.textContent = "Game Over";
-    ovMsg.innerHTML = `You scored <span class="big">${score}</span> ${score === best && score>0 ? "— a new best!" : "points."} Give it another go?`;
-    playBtn.textContent = "Play Again";
-    overlay.classList.remove("hidden");
-  }
-
-  function togglePause() {
-    if (!running) return;
-    paused = !paused;
-    if (paused) {
-      ovTitle.textContent = "Paused";
-      ovMsg.innerHTML = `Score <span class="big">${score}</span>. Press <span class="big">Space</span> or the button to resume.`;
-      playBtn.textContent = "Resume";
-      overlay.classList.remove("hidden");
-    } else {
-      overlay.classList.add("hidden");
-      lastTick = performance.now();
-    }
-  }
-
-  function step() {
-    dir = nextDir;
-    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-
-    // wall collision
-    if (head.x < 0 || head.y < 0 || head.x >= GRID || head.y >= GRID) return gameOver();
-    // self collision
-    if (snake.some(s => s.x===head.x && s.y===head.y)) return gameOver();
-
-    snake.unshift(head);
-
-    if (head.x === food.x && head.y === food.y) {
-      score += 10;
-      scoreEl.textContent = score;
-      popScale = 1;
-      placeFood();
-    } else {
-      snake.pop();
-    }
-  }
-
-  // ---- Rendering ----
-  function drawGrid() {
-    for (let y=0; y<GRID; y++) {
-      for (let x=0; x<GRID; x++) {
-        ctx.fillStyle = (x+y)%2 === 0 ? "#141a27" : "#121824";
-        ctx.fillRect(x*CELL, y*CELL, CELL, CELL);
+  function buildBoard() {
+    boardEl.innerHTML = "";
+    for (let r = 0; r < ROWS; r++) {
+      const rowEl = document.createElement("div");
+      rowEl.className = "row";
+      rowEl.dataset.row = r;
+      for (let c = 0; c < COLS; c++) {
+        const t = document.createElement("div");
+        t.className = "tile";
+        t.dataset.row = r; t.dataset.col = c;
+        rowEl.appendChild(t);
       }
+      boardEl.appendChild(rowEl);
     }
   }
 
-  function roundRect(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, r);
-    ctx.fill();
+  const KEYS = [
+    "Q W E R T Y U I O P".split(" "),
+    "A S D F G H J K L".split(" "),
+    ["Enter", ..."Z X C V B N M".split(" "), "Back"]
+  ];
+
+  function buildKeyboard() {
+    kbEl.innerHTML = "";
+    KEYS.forEach(krow => {
+      const rEl = document.createElement("div");
+      rEl.className = "krow";
+      krow.forEach(k => {
+        const b = document.createElement("button");
+        b.className = "key" + (k.length > 1 ? " wide" : "");
+        b.textContent = k === "Back" ? "⌫" : k;
+        b.dataset.key = k;
+        b.addEventListener("click", () => handleKey(k));
+        rEl.appendChild(b);
+      });
+      kbEl.appendChild(rEl);
+    });
   }
 
-  function draw() {
-    drawGrid();
+  function tileAt(r, c) { return boardEl.querySelector(`.tile[data-row="${r}"][data-col="${c}"]`); }
+  function keyEl(k) { return kbEl.querySelector(`.key[data-key="${k}"]`); }
 
-    // food (pulsing)
-    if (popScale > 0) popScale = Math.max(0, popScale - 0.06);
-    const fx = food.x*CELL, fy = food.y*CELL;
-    const grow = popScale * 3;
-    ctx.save();
-    ctx.shadowColor = "rgba(244,114,182,.65)";
-    ctx.shadowBlur = 14;
-    ctx.fillStyle = "#f472b6";
-    roundRect(fx + 4 - grow/2, fy + 4 - grow/2, CELL-8 + grow, CELL-8 + grow, 6);
-    ctx.restore();
+  function toast(msg, ms = 1400) {
+    const t = document.createElement("div");
+    t.className = "toast"; t.textContent = msg;
+    toastEl.appendChild(t);
+    setTimeout(() => {
+      t.style.transition = "opacity .3s"; t.style.opacity = "0";
+      setTimeout(() => t.remove(), 300);
+    }, ms);
+  }
 
-    // snake
-    const n = snake.length;
-    for (let i = n-1; i >= 0; i--) {
-      const s = snake[i];
-      const t = 1 - i / Math.max(n,1);            // head brightest
-      const g = Math.round(150 + t*80);           // yellow: high R, mid-high G, low B
-      ctx.fillStyle = i === 0 ? "#fde047" : `rgb(${220 + (t*30|0)}, ${g}, ${20 + (t*30|0)})`;
-      const pad = i === 0 ? 2 : 3;
-      roundRect(s.x*CELL + pad, s.y*CELL + pad, CELL - pad*2, CELL - pad*2, i===0 ? 7 : 5);
+  function newGame() {
+    answer = pickAnswer();
+    row = 0; col = 0; over = false; busy = false;
+    grid = Array.from({length: ROWS}, () => Array(COLS).fill(""));
+    buildBoard();
+    // reset keyboard colors
+    kbEl.querySelectorAll(".key").forEach(k => k.classList.remove("correct","present","absent"));
+    closeModal();
+  }
 
-      // eyes on the head
-      if (i === 0) {
-        ctx.fillStyle = "#2a2200";
-        const cx = s.x*CELL + CELL/2, cy = s.y*CELL + CELL/2;
-        const ex = dir.x, ey = dir.y;
-        const off = 3.2, r = 2;
-        // perpendicular offset for two eyes
-        const px = -ey, py = ex;
-        ctx.beginPath();
-        ctx.arc(cx + ex*3 + px*off, cy + ey*3 + py*off, r, 0, 7);
-        ctx.arc(cx + ex*3 - px*off, cy + ey*3 - py*off, r, 0, 7);
-        ctx.fill();
+  function handleKey(k) {
+    if (over || busy) return;
+    if (k === "Enter") return submit();
+    if (k === "Back") return backspace();
+    if (/^[a-zA-Z]$/.test(k) && col < COLS) {
+      grid[row][col] = k.toUpperCase();
+      const t = tileAt(row, col);
+      t.textContent = k; t.classList.add("filled");
+      col++;
+    }
+  }
+
+  function backspace() {
+    if (col > 0) {
+      col--;
+      grid[row][col] = "";
+      const t = tileAt(row, col);
+      t.textContent = ""; t.classList.remove("filled");
+    }
+  }
+
+  function shakeRow() {
+    const rEl = boardEl.querySelector(`.row[data-row="${row}"]`);
+    rEl.classList.add("shake");
+    setTimeout(() => rEl.classList.remove("shake"), 420);
+  }
+
+  function submit() {
+    if (col < COLS) { toast("Not enough letters"); shakeRow(); return; }
+    const guess = grid[row].join("");
+    if (!VALID.has(guess.toLowerCase())) { toast("Not in word list"); shakeRow(); return; }
+
+    // Score with correct duplicate handling
+    const result = Array(COLS).fill("absent");
+    const ans = answer.split("");
+    const counts = {};
+    ans.forEach(ch => counts[ch] = (counts[ch]||0)+1);
+    // first pass: correct
+    for (let c = 0; c < COLS; c++) {
+      if (guess[c] === ans[c]) { result[c] = "correct"; counts[guess[c]]--; }
+    }
+    // second pass: present
+    for (let c = 0; c < COLS; c++) {
+      if (result[c] === "correct") continue;
+      if (counts[guess[c]] > 0) { result[c] = "present"; counts[guess[c]]--; }
+    }
+
+    busy = true;
+    const won = result.every(r => r === "correct");
+
+    for (let c = 0; c < COLS; c++) {
+      const t = tileAt(row, c);
+      setTimeout(() => {
+        t.classList.add("reveal");
+        setTimeout(() => {
+          t.classList.add(result[c]);
+          // update keyboard (don't downgrade a correct key)
+          const ke = keyEl(guess[c]);
+          if (ke) {
+            const cur = ke.classList.contains("correct") ? "correct"
+                      : ke.classList.contains("present") ? "present"
+                      : ke.classList.contains("absent") ? "absent" : "";
+            const rank = { "": 0, absent: 1, present: 2, correct: 3 };
+            if (rank[result[c]] > rank[cur]) {
+              ke.classList.remove("present","absent");
+              ke.classList.add(result[c]);
+            }
+          }
+        }, 250);
+      }, c * 260);
+    }
+
+    const revealDone = (COLS - 1) * 260 + 500;
+    setTimeout(() => {
+      busy = false;
+      if (won) {
+        const rEl = boardEl.querySelector(`.row[data-row="${row}"]`);
+        rEl.classList.add("win");
+        over = true;
+        recordResult(true);
+        setTimeout(() => showEndModal(true), 700);
+      } else if (row === ROWS - 1) {
+        over = true;
+        recordResult(false);
+        setTimeout(() => showEndModal(false), 400);
+      } else {
+        row++; col = 0;
       }
-    }
+    }, revealDone);
   }
 
-  function loop(now) {
-    animId = requestAnimationFrame(loop);
-    if (!running || paused) { draw(); return; }
-    if (now - lastTick >= stepMs) {
-      lastTick = now - ((now - lastTick) % stepMs);
-      step();
-    }
-    draw();
+  function recordResult(won) {
+    stats.played++;
+    if (won) { stats.wins++; stats.streak++; stats.maxStreak = Math.max(stats.maxStreak, stats.streak); }
+    else { stats.streak = 0; }
   }
 
-  // ---- Input ----
-  function setDir(x, y) {
-    // prevent reversing directly into the neck
-    if (x === -dir.x && y === -dir.y) return;
-    nextDir = {x, y};
+  // ---- Modals ----
+  function closeModal() { modalBg.classList.add("hidden"); }
+
+  function showEndModal(won) {
+    const winPct = stats.played ? Math.round((stats.wins / stats.played) * 100) : 0;
+    modal.innerHTML = `
+      <h2>${won ? "Splendid! 🎉" : "So close!"}</h2>
+      <p class="sub">${won ? `You got it in ${row + 1} ${row === 0 ? "try" : "tries"}.` : "Better luck next round."}</p>
+      <div class="answer-reveal">${answer}</div>
+      <div class="stats">
+        <div class="stat"><div class="n">${stats.played}</div><div class="l">Played</div></div>
+        <div class="stat"><div class="n">${winPct}</div><div class="l">Win %</div></div>
+        <div class="stat"><div class="n">${stats.streak}</div><div class="l">Streak</div></div>
+        <div class="stat"><div class="n">${stats.maxStreak}</div><div class="l">Best</div></div>
+      </div>
+      <button class="primary" id="againBtn">Play Again</button>
+    `;
+    modalBg.classList.remove("hidden");
+    document.getElementById("againBtn").addEventListener("click", newGame);
   }
 
-  const keyMap = {
-    ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0],
-    w:[0,-1], s:[0,1], a:[-1,0], d:[1,0],
-    W:[0,-1], S:[0,1], A:[-1,0], D:[1,0]
-  };
+  function showHelp() {
+    modal.innerHTML = `
+      <h2>How to play</h2>
+      <p class="sub">Guess the hidden 5-letter word in six tries.</p>
+      <div class="how">
+        Each guess must be a valid word. After each guess, the tiles change color:
+        <p style="margin-top:10px"><span class="chip" style="background:var(--correct)">A</span> &nbsp;<b>Green</b> — right letter, right spot.</p>
+        <p style="margin-top:8px"><span class="chip" style="background:var(--present)">B</span> &nbsp;<b>Yellow</b> — in the word, wrong spot.</p>
+        <p style="margin-top:8px"><span class="chip" style="background:var(--absent);color:#cdd8d1">C</span> &nbsp;<b>Gray</b> — not in the word.</p>
+      </div>
+      <button class="primary" id="closeHelp">Got it</button>
+    `;
+    modalBg.classList.remove("hidden");
+    document.getElementById("closeHelp").addEventListener("click", closeModal);
+  }
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === " " || e.code === "Space") { e.preventDefault(); togglePause(); return; }
-    if (e.key === "Enter" && !running) { start(); return; }
-    const m = keyMap[e.key];
-    if (m) {
-      e.preventDefault();
-      if (!running && overlay.classList.contains("hidden") === false && ovTitle.textContent !== "Paused") return;
-      setDir(m[0], m[1]);
+  // ---- Events ----
+  document.addEventListener("keydown", (e) => {
+    if (!modalBg.classList.contains("hidden")) {
+      if (e.key === "Enter") { const b = modal.querySelector(".primary"); if (b) b.click(); }
+      return;
     }
+    if (e.key === "Enter") handleKey("Enter");
+    else if (e.key === "Backspace") handleKey("Back");
+    else if (/^[a-zA-Z]$/.test(e.key)) handleKey(e.key);
   });
 
-  // touch / swipe
-  let touchStart = null;
-  canvas.addEventListener("touchstart", (e) => {
-    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  }, {passive:true});
-  canvas.addEventListener("touchmove", (e) => { e.preventDefault(); }, {passive:false});
-  canvas.addEventListener("touchend", (e) => {
-    if (!touchStart) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStart.x, dy = t.clientY - touchStart.y;
-    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
-    if (Math.abs(dx) > Math.abs(dy)) setDir(dx>0?1:-1, 0);
-    else setDir(0, dy>0?1:-1);
-    touchStart = null;
-  }, {passive:true});
+  document.getElementById("newBtn").addEventListener("click", newGame);
+  document.getElementById("helpBtn").addEventListener("click", showHelp);
+  modalBg.addEventListener("click", (e) => { if (e.target === modalBg) closeModal(); });
 
-  playBtn.addEventListener("click", () => {
-    if (paused) { togglePause(); }
-    else { start(); }
-  });
-
-  speedSeg.addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    stepMs = +btn.dataset.speed;
-    [...speedSeg.children].forEach(b => b.classList.toggle("active", b === btn));
-  });
-
-  // Kick off idle render so the board looks alive before starting
-  reset();
-  draw();
+  // Init
+  buildKeyboard();
+  newGame();
 })();
 </script>
 </body>
